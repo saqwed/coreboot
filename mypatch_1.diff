@@ -1,0 +1,15 @@
+diff --git a/payloads/external/tianocore/Makefile b/payloads/external/tianocore/Makefile
+index 92a809ade8..7479725f5c 100644
+--- a/payloads/external/tianocore/Makefile
++++ b/payloads/external/tianocore/Makefile
+@@ -61,6 +61,10 @@ update: $(project_dir)
+ 			echo "    Working directory not clean; will not overwrite"; \
+ 		fi; \
+ 		git submodule update --init
++	cd  $(project_dir); \
++		echo apply patch; \
++		git apply ../../../../mypatch_2.diff -p1; \
++		git status
+ 
+ checktools:
+ 	echo "Checking uuid-dev..."

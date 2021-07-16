@@ -1,0 +1,13 @@
+diff --git a/UefiPayloadPkg/UefiPayloadPkg.dsc b/UefiPayloadPkg/UefiPayloadPkg.dsc
+index d2dedf5b4f..924cc783c4 100644
+--- a/UefiPayloadPkg/UefiPayloadPkg.dsc
++++ b/UefiPayloadPkg/UefiPayloadPkg.dsc
+@@ -87,7 +87,7 @@
+   #
+   # Shell options: [BUILD_SHELL, MIN_BIN, NONE, UEFI_BIN]
+   #
+-  DEFINE SHELL_TYPE                   = BUILD_SHELL
++  DEFINE SHELL_TYPE                   = NONE
+ 
+ [BuildOptions]
+   *_*_*_CC_FLAGS                 = -D DISABLE_NEW_DEPRECATED_INTERFACES

@@ -1,0 +1,73 @@
+name: qemu
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  App:
+    name: tianocore
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Setup build environment
+        run: |-
+          sudo apt-get update
+          sudo apt-get install -y bison build-essential curl flex git gnat libncurses5-dev m4 zlib1g-dev
+          sudo apt-get install -y nasm
+          # make savedefconfig DOTCONFIG=.config DEFCONFIG=.tianocore.config
+          make defconfig KBUILD_DEFCONFIG=.tianocore.config DOTCONFIG=.config
+          # Apply mypatch_1.diff and mypatch_2.diff to remove internal shell to avoid stuck at efi shell screen
+          git apply mypatch_1.diff
+
+      - name: Build
+        run: |-
+          make crossgcc-i386 CPUS=$(nproc)
+          make
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: coreboot_tianocore_${{ github.sha }}
+          path: |-
+            build/coreboot.rom
+            hda-contents/
+
+  Test:
+    needs: ['App']
+    name: qemu-x86_64
+    continue-on-error: true
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: coreboot_tianocore_${{ github.sha }}
+
+      - name: Setup qemu environment
+        run: |-
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86
+
+      - name: Run
+        run: |-
+          ls -alR
+          HDA_CONTENTS=hda-contents
+          # if [ ! -d "${HDA_CONTENTS}" ]; then
+          #   mkdir ${HDA_CONTENTS}
+          # fi
+          # echo mm 0x604 -w 2 0x2000 -IO>${HDA_CONTENTS}/startup.nsh
+          QEMU_PARAMETERS=-nodefaults
+          QEMU_PARAMETERS+=" -machine q35"
+          QEMU_PARAMETERS+=" -serial stdio"
+          QEMU_PARAMETERS+=" -display none"
+          QEMU_PARAMETERS+=" --net none"
+          QEMU_PARAMETERS+=" -bios build/coreboot.rom"
+          QEMU_PARAMETERS+=" -drive format=raw,file=fat:rw:${HDA_CONTENTS}"
+          echo Run qemu-system-x86_64 with parameters = ${QEMU_PARAMETERS}
+          qemu-system-x86_64 ${QEMU_PARAMETERS} || true
